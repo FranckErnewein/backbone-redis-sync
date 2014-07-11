@@ -28,8 +28,13 @@
   },
   "devDependencies": {
     "backbone": "^1.1.2",
+    "chai": "^1.9.1",
     "grunt": "^0.4.5",
     "grunt-mocha-test": "^0.11.0",
     "redis": "^0.11.0"
+  },
+  "dependencies": {
+    "lodash": "^2.4.1",
+    "q": "^1.0.1"
   }
 }
