@@ -1,0 +1,35 @@
+{
+  "name": "backbone-redis-sync",
+  "version": "0.0.1",
+  "description": "Backbone.sync for redis",
+  "main": "index.js",
+  "scripts": {
+    "test": "grunt test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FranckErnewein/backbone-redis-sync.git"
+  },
+  "keywords": [
+    "backbone",
+    "sync",
+    "model",
+    "pubsub"
+  ],
+  "author": "Franck Ernewein <franck.ernewein@gamil.com>",
+  "license": "GPLv2",
+  "bugs": {
+    "url": "https://github.com/FranckErnewein/backbone-redis-sync/issues"
+  },
+  "homepage": "https://github.com/FranckErnewein/backbone-redis-sync",
+  "peerDependencies": {
+    "backbone": "1.x",
+    "redis": "*"
+  },
+  "devDependencies": {
+    "backbone": "^1.1.2",
+    "grunt": "^0.4.5",
+    "grunt-mocha-test": "^0.11.0",
+    "redis": "^0.11.0"
+  }
+}
