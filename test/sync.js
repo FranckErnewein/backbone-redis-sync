@@ -14,7 +14,7 @@ describe('sync', function() {
       test: 'some data'
     };
 
-    function del(done){
+    function del(done) {
       client.del(data.id, function() {
         done();
       });
@@ -32,11 +32,25 @@ describe('sync', function() {
       });
     });
 
-    it('should fetch data from redis', function(done){
-      var model = new Backbone.Model({id:data.id});
-      model.fetch().done(function(){
+    it('should fetch data from redis', function(done) {
+      var model = new Backbone.Model({
+        id: data.id
+      });
+      model.fetch().done(function() {
         expect(model.get('test')).to.be.equal(data.test);
         done();
+      });
+    });
+
+    it('should delete data from redis', function(done) {
+      var model = new Backbone.Model({
+        id: data.id
+      });
+      model.destroy().done(function() {
+        client.hget(data.id, 'test', function(err, fromRedis) {
+          expect(fromRedis).to.be.equal(null);
+          done();
+        });
       });
     });
 
