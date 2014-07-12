@@ -13,18 +13,15 @@ describe('sync', function() {
       id: 'test_save',
       test: 'some data'
     };
-    /*
-    beforeEach(function(done){
-      redis.del(data.id, function(){
-        done();  
-      });
-    });
-    */
-    before(function(done) {
+
+    function del(done){
       client.del(data.id, function() {
         done();
       });
-    });
+    }
+    before(del);
+    after(del);
+
     it('should save in redis', function(done) {
       var model = new Backbone.Model(data);
       model.save().then(function() {
@@ -34,6 +31,15 @@ describe('sync', function() {
         });
       });
     });
+
+    it('should fetch data from redis', function(done){
+      var model = new Backbone.Model({id:data.id});
+      model.fetch().done(function(){
+        expect(model.get('test')).to.be.equal(data.test);
+        done();
+      });
+    });
+
   });
 
 });
