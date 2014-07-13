@@ -35,12 +35,38 @@ describe('RedisModel', function() {
       });
 
       m2.subscribe();
-      m2.on('change', function() {
+      m2.once('change', function() {
         expect(m2.get('foo')).to.be.equal('bar');
         done();
       });
 
       m1.publish({
+        foo: 'bar'
+      });
+
+    });
+
+  });
+
+
+  describe('#publishOnChange', function() {
+
+    it('should subcribe to model channel', function(done) {
+      var m1 = new RedisModel({
+        id: 'pubsub'
+      });
+      var m2 = new RedisModel({
+        id: 'pubsub'
+      });
+
+      m2.subscribe();
+      m2.once('change', function() {
+        expect(m2.get('foo')).to.be.equal('bar');
+        done();
+      });
+
+      m1.publishOnChange();
+      m1.set({
         foo: 'bar'
       });
 
