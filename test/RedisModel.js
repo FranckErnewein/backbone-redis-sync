@@ -79,9 +79,9 @@ describe('RedisModel', function() {
 
   });
 
-  describe('#unscubcribe', function() {
+  describe('#unsubscribe', function() {
 
-    it('should subcribe to model channel', function(done) {
+    it('should subcribe then unsubscribe to a model channel', function(done) {
       var m1 = new RedisModel({
         id: 'unsub'
       });
@@ -102,11 +102,36 @@ describe('RedisModel', function() {
 
       m1.set('foo', 'bar');
 
-      setTimeout(function(){
+      setTimeout(function() {
         expect(n).to.be.equal(1);
         done();
       }, 500);
 
+    });
+  });
+
+  describe('#save', function() {
+    it('should publish on a save() action', function(done) {
+
+      var m1 = new RedisModel();
+      m1.publishOnChange();
+      m1.save({
+        foo: 'bar'
+      }).done(function() {
+        var m2 = new RedisModel({
+          id: m1.id
+        });
+        m2.subscribe().done(function(){
+          m2.once('change', function() {
+            expect(m2.get('foo')).to.be.equal('baz');
+            m2.unsubscribe();
+            done();
+          });
+          m1.save({
+            foo: 'baz'
+          });
+        });
+      });
 
     });
   });
