@@ -4,6 +4,11 @@ var client = require('redis').createClient();
 
 describe('RedisModel', function() {
 
+  after(function(done) {
+    client.end();
+    done();
+  });
+
   describe('#publish', function() {
 
     it('should publish change on redis', function(done) {
@@ -53,10 +58,10 @@ describe('RedisModel', function() {
 
     it('should subcribe to model channel', function(done) {
       var m1 = new RedisModel({
-        id: 'pubsub'
+        id: 'autopubsub'
       });
       var m2 = new RedisModel({
-        id: 'pubsub'
+        id: 'autopubsub'
       });
 
       m2.subscribe();
@@ -72,6 +77,38 @@ describe('RedisModel', function() {
 
     });
 
+  });
+
+  describe('#unscubcribe', function() {
+
+    it('should subcribe to model channel', function(done) {
+      var m1 = new RedisModel({
+        id: 'unsub'
+      });
+      var m2 = new RedisModel({
+        id: 'unsub'
+      });
+      var n = 0;
+
+      m1.publishOnChange();
+      m2.subscribe();
+      m2.once('change', function() {
+        m2.unsubscribe();
+        m1.set('foo', 'baz');
+      });
+      m2.on('change', function() {
+        n++;
+      });
+
+      m1.set('foo', 'bar');
+
+      setTimeout(function(){
+        expect(n).to.be.equal(1);
+        done();
+      }, 500);
+
+
+    });
   });
 
 });
