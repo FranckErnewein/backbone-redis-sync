@@ -1,5 +1,7 @@
 var Backbone = require('backbone');
 var sync = require('..').sync;
+var UID_KEY = require('..').config.UID_KEY;
+var ID_PREFIX = require('..').config.ID_PREFIX;
 var expect = require('chai').expect;
 var client = require('redis').createClient();
 
@@ -50,6 +52,21 @@ describe('sync', function() {
         client.hget(data.id, 'test', function(err, fromRedis) {
           expect(fromRedis).to.be.equal(null);
           done();
+        });
+      });
+    });
+
+    it('should create a new model with new ID', function(done) {
+      var model = new Backbone.Model({
+        foo: 'bar'
+      });
+      model.save().done(function(){
+        client.get(UID_KEY, function(err, key){
+          expect(model.id).to.be.equal(ID_PREFIX + key);
+          client.hget(model.id, 'foo', function(err, valueInRedis){
+            expect(valueInRedis).to.be.equal('bar');
+            done();
+          });
         });
       });
     });
