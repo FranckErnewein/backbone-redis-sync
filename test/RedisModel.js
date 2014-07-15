@@ -1,6 +1,7 @@
 var RedisModel = require('..').RedisModel;
 var expect = require('chai').expect;
-var client = require('redis').createClient();
+var redis = require('redis');
+var client = redis.createClient();
 
 describe('RedisModel', function() {
 
@@ -102,10 +103,11 @@ describe('RedisModel', function() {
 
       m1.set('foo', 'bar');
 
-      setTimeout(function() {
+      var subscriber = redis.createClient();
+      subscriber.subscribe(m2.id, function(){
         expect(n).to.be.equal(1);
         done();
-      }, 500);
+      });
 
     });
   });
