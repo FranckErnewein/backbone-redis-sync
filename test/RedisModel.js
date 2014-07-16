@@ -40,16 +40,17 @@ describe('RedisModel', function() {
         id: 'pubsub'
       });
 
-      m2.subscribe();
-      m2.once('change', function() {
-        expect(m2.get('foo')).to.be.equal('bar');
-        done();
-      });
+      m2.subscribe().done(function(){
+        m2.once('change', function() {
+          expect(m2.get('foo')).to.be.equal('bar');
+          done();
+        });
 
-      m1.publish({
-        foo: 'bar'
-      });
+        m1.publish({
+          foo: 'bar'
+        });
 
+      });
     });
 
   });
@@ -64,18 +65,16 @@ describe('RedisModel', function() {
       var m2 = new RedisModel({
         id: 'autopubsub'
       });
-
-      m2.subscribe();
-      m2.once('change', function() {
-        expect(m2.get('foo')).to.be.equal('bar');
-        done();
-      });
-
       m1.publishOnChange();
-      m1.set({
-        foo: 'bar'
+      m2.subscribe().done(function(){
+        m2.once('change', function() {
+          expect(m2.get('foo')).to.be.equal('bar');
+          done();
+        });
+        m1.set({
+          foo: 'bar'
+        });
       });
-
     });
 
   });
