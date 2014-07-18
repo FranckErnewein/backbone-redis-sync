@@ -103,7 +103,7 @@ describe('RedisModel', function() {
       m1.set('foo', 'bar');
 
       var subscriber = redis.createClient();
-      subscriber.subscribe(m2.id, function(){
+      subscriber.subscribe(m2.id, function() {
         expect(n).to.be.equal(1);
         done();
       });
@@ -122,7 +122,7 @@ describe('RedisModel', function() {
         var m2 = new RedisModel({
           id: m1.id
         });
-        m2.subscribe().done(function(){
+        m2.subscribe().done(function() {
           m2.once('change', function() {
             expect(m2.get('foo')).to.be.equal('baz');
             m2.unsubscribe();
@@ -132,6 +132,27 @@ describe('RedisModel', function() {
             foo: 'baz'
           });
         });
+      });
+
+    });
+
+    it('should delete a key', function(done) {
+      var m1 = new RedisModel({
+        foo: 'bar',
+        nomore: 10
+      });
+      m1.save().done(function() {
+        m1.unset('nomore');
+        m1.save().done(function() {
+          var m2 = new RedisModel({
+            id: m1.id
+          });
+          m2.fetch().done(function() {
+            expect(m2.get('nomore')).to.be.undefined; //jshint ignore:line
+            done();
+          });
+        });
+
       });
 
     });
