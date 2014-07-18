@@ -20,7 +20,7 @@ describe('RedisModel', function() {
         id: 'test_publish'
       });
       client.on('pmessage', function(pattern, channel, publishedData) {
-        expect(JSON.stringify(data)).to.be.equal(publishedData);
+        expect(JSON.stringify([data, []])).to.be.equal(publishedData);
         client.end();
         done();
       });
@@ -40,7 +40,7 @@ describe('RedisModel', function() {
         id: 'pubsub'
       });
 
-      m2.subscribe().done(function(){
+      m2.subscribe().done(function() {
         m2.once('change', function() {
           expect(m2.get('foo')).to.be.equal('bar');
           done();
@@ -51,6 +51,29 @@ describe('RedisModel', function() {
         });
 
       });
+    });
+
+    it('should subscribe for unset', function(done) {
+      var m1 = new RedisModel({
+        unsetonsub: 'willonsetonsub'
+      });
+      m1.save().done(function() {
+        m1.publishOnChange();
+        var m2 = new RedisModel({
+          id: m1.id,
+          unsetonsub: 'willonsetonsub'
+        });
+        m2.subscribe().done(function() {
+          m2.once('change', function() {
+            expect(m2.get('unsetonsub')).to.be.undefined; //jshint ignore:line
+            m1.unpublishOnChange();
+            m2.unsubscribe();
+            done();
+          });
+          m1.unset('unsetonsub');
+        });
+      });
+
     });
 
   });
@@ -66,7 +89,7 @@ describe('RedisModel', function() {
         id: 'autopubsub'
       });
       m1.publishOnChange();
-      m2.subscribe().done(function(){
+      m2.subscribe().done(function() {
         m2.once('change', function() {
           expect(m2.get('foo')).to.be.equal('bar');
           done();
@@ -88,24 +111,30 @@ describe('RedisModel', function() {
       var m2 = new RedisModel({
         id: 'unsub'
       });
-      var n = 0;
-
-      m1.publishOnChange();
-      m2.subscribe();
-      m2.once('change', function() {
-        m2.unsubscribe();
-        m1.set('foo', 'baz');
+      var m1changed = 0;
+      var m2changed = 0;
+      m1.on('change', function() {
+        m1changed++;
       });
       m2.on('change', function() {
-        n++;
+        m2changed++;
       });
 
-      m1.set('foo', 'bar');
-
-      var subscriber = redis.createClient();
-      subscriber.subscribe(m2.id, function() {
-        expect(n).to.be.equal(1);
-        done();
+      m1.publishOnChange();
+      m2.subscribe().done(function() {
+        m2.once('change', function() {
+          m2.unsubscribe();
+          m1.set('foo', 'two');
+          m2.subscribe().done(function() {
+            m2.once('change', function() {
+              expect(m1changed).to.be.equal(3);
+              expect(m2changed).to.be.equal(2);
+              done();
+            });
+            m1.set('foo', 'three');
+          });
+        });
+        m1.set('foo', 'one');
       });
 
     });
