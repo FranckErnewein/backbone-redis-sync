@@ -165,6 +165,21 @@ describe('RedisModel', function() {
 
     });
 
+    it('should not set any other key', function(done){
+      var data = {
+        only: 'one'
+      };
+      var m1 = new RedisModel(data);
+      m1.save().done(function(){
+        var m2 = new RedisModel({
+          id: m1.id
+        });
+        m2.fetch().done(function(){
+          done();
+        });
+      });
+    });
+
     it('should delete a key', function(done) {
       var m1 = new RedisModel({
         foo: 'bar',

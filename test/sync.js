@@ -27,12 +27,14 @@ describe('sync', function() {
     it('should save in redis', function(done) {
       var model = new Backbone.Model(data);
       model.save().then(function() {
+        expect(data).to.deep.equal(model.toJSON());
         client.hget(data.id, 'test', function(err, fromRedis) {
           expect(data.test).to.deep.equal(fromRedis);
           done();
         });
       });
     });
+
 
     it('should fetch data from redis', function(done) {
       var model = new Backbone.Model({
