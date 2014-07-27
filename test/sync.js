@@ -46,14 +46,26 @@ describe('sync', function() {
       });
     });
 
+    it('should return a rejected promise when fetch unexisting key in redis', function(done) {
+      var model = new Backbone.Model({
+        id: 'unexisting id'
+      });
+      model.fetch().fail(function() {
+        done();
+      });
+    });
+
     it('should delete data from redis', function(done) {
       var model = new Backbone.Model({
         id: data.id
       });
-      model.destroy().done(function() {
-        client.hget(data.id, 'test', function(err, fromRedis) {
-          expect(fromRedis).to.be.equal(null);
-          done();
+      client.exists(data.id, function(err, fromRedis) {
+        expect(fromRedis).to.be.equal(1);
+        model.destroy().done(function() {
+          client.exists(data.id, function(err, fromRedis) {
+            expect(fromRedis).to.be.equal(0);
+            done();
+          });
         });
       });
     });
@@ -62,10 +74,10 @@ describe('sync', function() {
       var model = new Backbone.Model({
         foo: 'bar'
       });
-      model.save().done(function(){
-        client.get(UID_KEY, function(err, key){
+      model.save().done(function() {
+        client.get(UID_KEY, function(err, key) {
           expect(model.id).to.be.equal(ID_PREFIX + key);
-          client.hget(model.id, 'foo', function(err, valueInRedis){
+          client.hget(model.id, 'foo', function(err, valueInRedis) {
             expect(valueInRedis).to.be.equal('bar');
             done();
           });
