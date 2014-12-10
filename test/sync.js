@@ -1,90 +1,110 @@
 var Backbone = require('backbone');
-var sync = require('..').sync;
-var UID_KEY = require('..').config.UID_KEY;
-var ID_PREFIX = require('..').config.ID_PREFIX;
+var sync = require('../lib/sync');
 var expect = require('chai').expect;
 var client = require('redis').createClient();
 
-Backbone.sync = sync;
+var Car = Backbone.Model.extend({
+  namespace: 'car',
+  parse: function(json) {
+    if (json.year) {
+      json.year = parseInt(json.year, 10);
+    }
+    json.GPS = (json.GPS === 'true');
+    return json;
+  },
+  sync: sync
+});
 
 describe('sync', function() {
 
-  describe('create', function() {
-
-    var data = {
-      id: 'test_save',
-      test: 'some data'
-    };
-
-    function del(done) {
-      client.del(data.id, function() {
-        done();
-      });
-    }
-    before(del);
-    after(del);
+  describe('#create', function() {
 
     it('should save in redis', function(done) {
-      var model = new Backbone.Model(data);
-      model.save().then(function() {
-        expect(data).to.deep.equal(model.toJSON());
-        client.hget(data.id, 'test', function(err, fromRedis) {
-          expect(data.test).to.deep.equal(fromRedis);
+      var car_data = {
+        model: 'A1',
+        brand: 'Audi',
+        color: 'black',
+        year: 2013,
+        GPS: false
+      };
+      var car = new Car(car_data);
+      car.save().done(function() {
+        expect(car.id).is.not.equal(undefined);
+        client.hgetall('car:' + car.id, function(err, redis_data) {
+          expect(redis_data.model).to.be.equal(car_data.model);
+          expect(redis_data.GPS).to.be.equal(car_data.GPS.toString());
           done();
         });
       });
     });
 
+  });
 
-    it('should fetch data from redis', function(done) {
-      var model = new Backbone.Model({
-        id: data.id
-      });
-      model.fetch().done(function() {
-        expect(model.get('test')).to.be.equal(data.test);
-        done();
-      });
-    });
+  describe('#read', function() {
 
-    it('should return a rejected promise when fetch unexisting key in redis', function(done) {
-      var model = new Backbone.Model({
-        id: 'unexisting id'
+    it('should create than fetch with the same id', function(done) {
+      var car = new Car({
+        brand: 'Renault'
       });
-      model.fetch().fail(function() {
-        done();
-      });
-    });
 
-    it('should delete data from redis', function(done) {
-      var model = new Backbone.Model({
-        id: data.id
-      });
-      client.exists(data.id, function(err, fromRedis) {
-        expect(fromRedis).to.be.equal(1);
-        model.destroy().done(function() {
-          client.exists(data.id, function(err, fromRedis) {
-            expect(fromRedis).to.be.equal(0);
-            done();
-          });
+      car.save().done(function() {
+        var same_car = new Car({
+          id: car.id
         });
-      });
-    });
-
-    it('should create a new model with new ID', function(done) {
-      var model = new Backbone.Model({
-        foo: 'bar'
-      });
-      model.save().done(function() {
-        client.get(UID_KEY, function(err, key) {
-          expect(model.id).to.be.equal(ID_PREFIX + key);
-          client.hget(model.id, 'foo', function(err, valueInRedis) {
-            expect(valueInRedis).to.be.equal('bar');
-            done();
-          });
+        same_car.fetch().done(function() {
+          expect(car.get('brand')).to.be.equal(same_car.get('brand'));
+          done();
         });
       });
     });
 
   });
+
+  describe('#update', function() {
+
+    it('should create then update', function(done) {
+
+      var car = new Car({
+        brand: 'Renault'
+      });
+
+      car.save().done(function() {
+        car.save({
+          brand: 'Ferrari'
+        }).done(function() {
+          var same_car = new Car({
+            id: car.id
+          });
+          same_car.fetch().done(function() {
+            expect(car.get('brand')).to.be.equal(same_car.get('brand'));
+            done();
+          });
+        });
+      });
+
+    });
+
+  });
+
+  describe('#delete', function() {
+    it('should create then delete', function(done) {
+      var car = new Car({
+        brand: 'Lada'
+      });
+
+      car.save().done(function() {
+        var id = car.id;
+        car.destroy().done(function() {
+          client.EXISTS('car:' + id, function(err, exists) {
+            expect(exists).to.be.equal(0);
+            done();
+          });
+        });
+      });
+
+    });
+  });
+
+
 
 });
