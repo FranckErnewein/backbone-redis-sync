@@ -23,7 +23,6 @@
   },
   "homepage": "https://github.com/FranckErnewein/backbone-redis-sync",
   "peerDependencies": {
-    "backbone": "1.x",
     "redis": "*"
   },
   "devDependencies": {
