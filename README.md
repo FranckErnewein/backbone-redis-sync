@@ -10,7 +10,7 @@ npm install backbone-redis-sync --save
 
 ## Usage Example
 
-```
+```js
 var Backbone = require('backbone');  
 var redisSync = require('backbone-redis-sync');
 
